@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="f7bf1a2c-b218-4157-a424-1d2195bc9aa9" >
+		<http:listener-connection host="0.0.0.0" port="8083" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="69097228-86af-4b2e-8ca0-46c4fb843585" >
+		<http:request-connection host="localhost" port="8088" />
+	</http:request-config>
+	<configuration doc:name="Configuration" doc:id="7770124a-124d-4ce1-b32a-03c229397389" defaultErrorHandler-ref="globalError_Handler" />
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="930f3840-99b8-40eb-8701-f0cf9fd00401" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<error-handler name="globalError_Handler" doc:id="923ec38e-66e0-4f11-a078-e19c46532eb9" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="d8d63cd6-b060-4d40-a543-9d316607d6bc" >
+			<ee:transform doc:name="Update Reservation" doc:id="053580aa-d05a-4131-828a-115ca7dd7039" >
+				<ee:message >
+					<ee:set-payload resource="MuleDMLTransformations/updateReservationsRequest.dwl" />
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Update - Reservation Flow" doc:id="15d1fa90-d66e-400a-8bdb-b792020177e5" name="UpdateReservationFlow" />
+			<logger level="INFO" doc:name="Logger" doc:id="0906ed88-36e3-485e-85de-49977640f27a" message="#[payload]" />
+			<set-variable value="#[payload]" doc:name="Update" doc:id="54e7900d-2b9e-438c-a13e-0db6a99c2bc3" variableName="update_wanted" />
+			<ee:transform doc:name="Transform Message" doc:id="fd04d5ad-79de-4f30-bee3-bf9e1763762a" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+ns ns0 http://webservices.sabre.com/pnrbuilder/v1_18
+ns ns01 http://schemas.xmlsoap.org/soap/envelope/
+---
+{
+	ns0#UpdateReservationRS: {
+		ns0#Success: vars.update_wanted.ns01#Envelope.ns01#Body.ns0#UpdateReservationRS.ns0#Success
+	}
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-continue>
+	</error-handler>
+
+</mule>
